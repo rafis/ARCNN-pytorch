@@ -19,8 +19,8 @@ if __name__ == '__main__':
     parser.add_argument('--arch', type=str, default='ARCNN', help='ARCNN or FastARCNN')
     parser.add_argument('--images_dir', type=str, required=True)
     parser.add_argument('--outputs_dir', type=str, required=True)
-    parser.add_argument('--jpeg_quality', type=int, default=10)
-    parser.add_argument('--patch_size', type=int, default=24)
+    parser.add_argument('--upscale_factor', type=float, default=3.0)
+    parser.add_argument('--patch_size', type=int, default=32)
     parser.add_argument('--batch_size', type=int, default=16)
     parser.add_argument('--num_epochs', type=int, default=20)
     parser.add_argument('--lr', type=float, default=5e-4)
@@ -48,7 +48,7 @@ if __name__ == '__main__':
         {'params': model.last.parameters(), 'lr': opt.lr * 0.1},
     ], lr=opt.lr)
 
-    dataset = Dataset(opt.images_dir, opt.patch_size, opt.jpeg_quality, opt.use_augmentation, opt.use_fast_loader)
+    dataset = Dataset(opt.images_dir, opt.patch_size, opt.upscale_factor, opt.use_augmentation, opt.use_fast_loader)
     dataloader = DataLoader(dataset=dataset,
                             batch_size=opt.batch_size,
                             shuffle=True,

@@ -6,6 +6,7 @@ import glob
 import io
 import numpy as np
 import PIL.Image as pil_image
+import PIL.ImageFilter as ImageFilter
 
 import tensorflow as tf
 config = tf.ConfigProto()
@@ -14,10 +15,10 @@ tf.enable_eager_execution(config=config)
 
 
 class Dataset(object):
-    def __init__(self, images_dir, patch_size, jpeg_quality, use_augmentation=False, use_fast_loader=False):
+    def __init__(self, images_dir, patch_size, upscale_factor=3.0, use_augmentation=False, use_fast_loader=False):
         self.image_files = sorted(glob.glob(images_dir + '/*'))
         self.patch_size = patch_size
-        self.jpeg_quality = jpeg_quality
+        self.upscale_factor = upscale_factor
         self.use_augmentation = use_augmentation
         self.use_fast_loader = use_fast_loader
 
@@ -44,10 +45,11 @@ class Dataset(object):
         crop_y = random.randint(0, label.height - self.patch_size)
         label = label.crop((crop_x, crop_y, crop_x + self.patch_size, crop_y + self.patch_size))
 
-        # additive jpeg noise
-        buffer = io.BytesIO()
-        label.save(buffer, format='jpeg', quality=self.jpeg_quality)
-        input = pil_image.open(buffer)
+        # generate downscaled image (using gaussian resampling? i'm not sure if this is proper gaussian resampling)
+        input = label.copy()
+        input = input.filter(ImageFilter.GaussianBlur(radius=self.upscale_factor))
+        input = input.resize(np.rint([self.patch_size / self.upscale_factor, self.patch_size / self.upscale_factor]).astype('int'), resample=pil_image.BICUBIC)
+        input = input.resize((self.patch_size, self.patch_size), resample=pil_image.BICUBIC)
 
         input = np.array(input).astype(np.float32)
         label = np.array(label).astype(np.float32)

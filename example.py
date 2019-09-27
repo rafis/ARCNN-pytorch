@@ -5,6 +5,7 @@ import torch
 import torch.backends.cudnn as cudnn
 from torchvision import transforms
 import PIL.Image as pil_image
+import PIL.ImageFilter as ImageFilter
 from model import ARCNN, FastARCNN
 
 cudnn.benchmark = True
@@ -17,6 +18,7 @@ if __name__ == '__main__':
     parser.add_argument('--weights_path', type=str, required=True)
     parser.add_argument('--image_path', type=str, required=True)
     parser.add_argument('--outputs_dir', type=str, required=True)
+    parser.add_argument('--upscale_factor', type=float, default=3.0)
     parser.add_argument('--jpeg_quality', type=int, default=10)
     opt = parser.parse_args()
 
@@ -44,8 +46,14 @@ if __name__ == '__main__':
 
     buffer = io.BytesIO()
     input.save(buffer, format='jpeg', quality=opt.jpeg_quality)
-    input = pil_image.open(buffer)
-    input.save(os.path.join(opt.outputs_dir, '{}_jpeg_q{}.png'.format(filename, opt.jpeg_quality)))
+    jpeg_compressed = pil_image.open(buffer)
+    jpeg_compressed.save(os.path.join(opt.outputs_dir, '{}_jpeg_q{}.png'.format(filename, opt.jpeg_quality)))
+
+    width, height = input.width, input.height
+    input = input.filter(ImageFilter.GaussianBlur(radius=opt.upscale_factor))
+    input = input.resize(np.rint([width / opt.upscale_factor, height / opt.upscale_factor]).astype('int'), resample=pil_image.BICUBIC)
+    input = input.resize((width, height), resample=pil_image.BICUBIC)
+    input.save(os.path.join(opt.outputs_dir, '{}_resampled{}.png'.format(filename, opt.upscale_factor)))
 
     input = transforms.ToTensor()(input).unsqueeze(0).to(device)
 

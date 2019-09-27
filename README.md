@@ -53,7 +53,7 @@ If you want to train quickly, you should use **--use_fast_loader** option.
 python main.py --arch "ARCNN" \     # ARCNN, FastARCNN
                --images_dir "" \
                --outputs_dir "" \
-               --jpeg_quality 10 \
+               --upscale_factor 3.0 \
                --patch_size 24 \
                --batch_size 16 \
                --num_epochs 20 \
@@ -73,5 +73,6 @@ python example --arch "ARCNN" \     # ARCNN, FastARCNN
                --weights_path "" \
                --image_path "" \
                --outputs_dir "" \
-               --jpeg_quality 10               
+               --upscale_factor 3.0 \
+               --jpeg_quality 10
 ```
